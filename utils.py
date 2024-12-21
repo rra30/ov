@@ -132,3 +132,17 @@ def visualize(nms_output, boxes, orig_image, label_names,scores, input_layer ):
         text = str(int(np.rint(scores[i]*100))) + "% " + label_map[label_names[i]]
         cv2.putText(orig_image, text, (xmin+2,ymin-5), cv2.FONT_HERSHEY_SIMPLEX,
                    .75, color, 2, cv2.LINE_AA)
+
+def predict_image(img, conf_threshold):
+
+    # ----- OpenVino ----- #
+    OV_image = img.copy()
+    input_image =prepare_data(OV_image, input_layer)
+    output = compiled_model([input_image])[output_layer]
+    boxes, scores, label_names = evaluate(output[0],label_map, conf_threshold)
+
+    if len(boxes):
+        nms_output = non_max_suppression(boxes, scores, conf_threshold)
+        visualize(nms_output, boxes, OV_image, label_names, scores, input_layer)
+
+    return OV_image
