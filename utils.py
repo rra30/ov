@@ -5,27 +5,10 @@ import cv2
 
 core = ov.Core()
 
-# 얼굴 인식 모델
-model_face = core.read_model(model='./model/face-detection-adas-0001.xml')
-compiled_model_face = core.compile_model(model = model_face, device_name="CPU")
-
-input_layer_face = compiled_model_face.input(0)
-output_layer_face = compiled_model_face.output(0)
-
-#감정 인식 모델
 model_emo = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
 compiled_model_emo = core.compile_model(model = model_emo, device_name="CPU")
-
 input_layer_emo = compiled_model_emo.input(0)
 output_layer_emo = compiled_model_emo.output(0)
-
-# 나이, 성별 인식 모델
-model_ag = core.read_model(model='./model/age-gender-recognition-retail-0013.xml')
-compiled_model_ag = core.compile_model(model = model_ag, device_name="CPU")
-
-input_layer_ag = compiled_model_ag.input(0)
-output_layer_ag = compiled_model_ag.output
-
 def prepare_data(image, input_layer_emo):
 
     input_w, input_h = input_layer.shape[2], input_layer.shape[3]
@@ -38,125 +21,114 @@ def prepare_data(image, input_layer_emo):
 
     return input_image
 
-def preprocess(image, input_layer_face):
-	N, input_channels, input_height, input_width = input_layer_face.shape
+infer_times_OV = []
 
-	resized_image = cv2.resize(image, (input_width, input_height))
-	transposed_image = resized_image.transpose(2, 0, 1)
-	input_image = np. expand_dims(transposed_image, 0)
+for i, image_path in enumerate(glob.glob(f'Pothole-detection-using-YOLOv5-1/valid/images/*.jpg')):
 
-	return input_image
+    image = cv2.imread(image_path)
+    input_image =prepare_data(image, input_layer)
 
-def find_faceboxes(image, results, confidence_threshold):
-	results = results.squeeze()
-	
-	scores = results[:,2]
-	boxes = results[:, -4:]
-
-	face_boxes = boxes[scores >= confidence_threshold]
-	scores = scores[scores >= confidence_threshold]
-
-	image_h, image_w, image_channels = image.shape
-	face_boxes = face_boxes*np.array([image_w, image_h, image_w, image_h])
-	face_boxes = face_boxes.astype(np.int64)
-
-	return face_boxes, scores
-
-def draw_faceboxes(image, face_boxes, scores):
-
-	show_image = image.copy()
-
-	for i in range(len(face_boxes)):
-		
-		xmin, ymin, xmax, ymax = face_boxes[i]
-		cv2.rectangle(img=show_image, pt1=(xmin,ymin), pt2=(xmax,ymax), color=(0,200,0), thickness=2)
-
-	return show_image
-
-def draw_emotions(face_boxes, image, show_image):
-    EMOTION_NAMES = ['neutral', 'happy', 'sad', 'surprise', 'anger']
-    for i in range(len(face_boxes)):
-
-        xmin, ymin, xmax, ymax = face_boxes[i]
-        face = image[ymin:ymax, xmin:xmax]
-
-        input_image = preprocess(face, input_layer_emo)
-        results_emo = compiled_model_emo([input_image])[output_layer_emo]
-
-        results_emo = results_emo.squeeze()
-        index = np.argmax(results_emo)
-
-        text = EMOTION_NAMES[index]
-        cv2.putText(show_image, text, (xmin, ymin), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 200, 0), 2)
-
-def draw_age_gender(face_boxes, image):
-    EMOTION_NAMES = ['neutral', 'happy', 'sad', 'surprise', 'anger']
-
-    show_image = image.copy()
-
-    for i in range(len(face_boxes)):
-        xmin, ymin, xmax, ymax = face_boxes[i]
-
-
-        xmin = max(0, xmin)
-        ymin = max(0, ymin)
-        xmax = min(image.shape[1], xmax)
-        ymax = min(image.shape[0], ymax)
-
-        face = image[ymin:ymax, xmin:xmax]
-
-        #--- emotion ---
-        input_image = preprocess(face, input_layer_emo)
-        results_emo = compiled_model_emo([input_image])[output_layer_emo]
-        results_emo = results_emo.squeeze()
-
-
-        index = np.argmax(results_emo)
-        if index >= len(EMOTION_NAMES):
-            index = 0
-
-        #--- age and gender ---
-        input_image_ag = preprocess(face, input_layer_ag)
-        results_ag = compiled_model_ag([input_image_ag])
-        age, gender = results_ag[1], results_ag[0]
-        age = np.squeeze(age)
-        age = int(age * 100)
-
-        gender = np.squeeze(gender)
-
-
-        if gender[0] >= 0.65:
-            gender_label = "female"
-            box_color = (200, 200, 0)
-        elif gender[1] >= 0.65:
-            gender_label = "male"
-            box_color = (0, 200, 200)
-        else:
-            gender_label = "unknown"
-            box_color = (200, 200, 200)
-
-
-        fontScale = max(0.5, image.shape[1] / 750)
-        text = f"{EMOTION_NAMES[index]}"
-
-        cv2.putText(show_image, text, (xmin, ymin - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, fontScale, (0, 200, 0), 2)
-
-
-        cv2.rectangle(show_image, (xmin, ymin), (xmax, ymax), box_color, 2)
-
-    return show_image
-
-def predict_image(img, conf_threshold):
-
-    # ----- OpenVino ----- #
-    OV_image = img.copy()
-    input_image =prepare_data(OV_image, input_layer)
+    #---OpenVino---
+    infer_start = time.time()
     output = compiled_model([input_image])[output_layer]
-    boxes, scores, label_names = evaluate(output[0],label_map, conf_threshold)
+    inference_time = time.time() - infer_start
+    infer_times_OV.append(inference_time)
+    #------
+    display('Image: ' +  str(i))
 
-    if len(boxes):
-        nms_output = non_max_suppression(boxes, scores, conf_threshold)
-        visualize(nms_output, boxes, OV_image, label_names, scores, input_layer)
 
-    return OV_image
+def non_max_suppression(boxes, scores, threshold):
+    assert boxes.shape[0] == scores.shape[0]
+
+    ys1 = boxes[:, 0]
+    xs1 = boxes[:, 1]
+    ys2 = boxes[:, 2]
+    xs2 = boxes[:, 3]
+    areas = (ys2 - ys1) * (xs2 - xs1)
+
+    scores_indexes = scores.argsort().tolist()
+    boxes_keep_index = []
+
+    while len(scores_indexes):
+        index = scores_indexes.pop()
+        boxes_keep_index.append(index)
+
+        if not len(scores_indexes):
+            break
+
+        ious = compute_iou(boxes[index], boxes[scores_indexes], areas[index], areas[scores_indexes])
+        filtered_indexes = set((ious > threshold).nonzero()[0])
+
+        scores_indexes = [
+            v for (i, v) in enumerate(scores_indexes)
+            if i not in filtered_indexes
+        ]
+    return np.array(boxes_keep_index)
+
+def compute_iou(box, boxes, box_area, boxes_area):
+
+    assert boxes.shape[0] == boxes_area.shape[0]
+
+    ys1 = np.maximum(box[0], boxes[:, 0])
+    xs1 = np.maximum(box[1], boxes[:, 1])
+    ys2 = np.minimum(box[2], boxes[:, 2])
+    xs2 = np.minimum(box[3], boxes[:, 3])
+
+    intersections = np.maximum(ys2 - ys1, 0) * np.maximum(xs2 - xs1, 0)
+    unions = box_area + boxes_area - intersections
+    ious = intersections / unions
+    return ious
+
+def evaluate(predictions, label_map, conf = .3):
+
+    boxes = []
+    scores = []
+    labels = []
+
+    for i, preds in enumerate(predictions[4:]):
+
+
+        detected_objects = np.argwhere(preds>conf)
+
+
+        if len(detected_objects):
+
+            for index in detected_objects:
+
+                    score = predictions[4][index][0]
+
+                    xcen = predictions[0][index][0]
+                    ycen = predictions[1][index][0]
+                    w = predictions[2][index][0]
+                    h = predictions[3][index][0]
+
+
+                    xmin = xcen - (w/2)
+                    xmax = xcen + (w/2)
+                    ymin = ycen - (h/2)
+                    ymax = ycen + (h/2)
+                    box = (xmin, ymin, xmax, ymax)
+
+                    boxes.append(box)
+                    scores.append(score)
+                    labels.append(i)
+
+    return np.array(boxes), np.array(scores), np.array(labels)
+
+def visualize(nms_output, boxes, orig_image, label_names,scores, input_layer ):
+    orig_h, orig_w, c = orig_image.shape
+    color = (0,0,0)
+    for i in nms_output:
+        xmin, ymin, xmax, ymax = boxes[i]
+
+        xmin = int(xmin*orig_w/input_layer.shape[2])
+        ymin = int(ymin*orig_h/input_layer.shape[3])
+        xmax = int(xmax*orig_w/input_layer.shape[2])
+        ymax = int(ymax*orig_h/input_layer.shape[3])
+
+        color = colors(label_names[i])
+        cv2.rectangle(orig_image, (xmin,ymin), (xmax,ymax), color, 4)
+
+        text = str(int(np.rint(scores[i]*100))) + "% " + label_map[label_names[i]]
+        cv2.putText(orig_image, text, (xmin+2,ymin-5), cv2.FONT_HERSHEY_SIMPLEX,
+                   .75, color, 2, cv2.LINE_AA)
