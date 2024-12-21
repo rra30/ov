@@ -1,8 +1,13 @@
 import openvino as ov
+import gradio as gr
+
 import cv2
 import numpy as np
-import glob
+import time
+
 from ultralytics.utils.plotting import colors
+from IPython.display import clear_output
+import glob
 core = ov.Core()
 
 model = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
