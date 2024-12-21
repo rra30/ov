@@ -135,10 +135,16 @@ def draw_age_gender(face_boxes, image):
 
     return show_image
 
-def predict_image(image, conf_threshold):
-    input_image = preprocess(image, input_layer_face)
-    results = compiled_model_face([input_image])[output_layer_face]
-    face_boxes, scores = find_faceboxes(image, results, conf_threshold)
-    visualize_image = draw_age_gender(face_boxes, image)
+def predict_image(img, conf_threshold):
 
-    return visualize_image
+    # ----- OpenVino ----- #
+    OV_image = img.copy()
+    input_image =prepare_data(OV_image, input_layer)
+    output = compiled_model([input_image])[output_layer]
+    boxes, scores, label_names = evaluate(output[0],label_map, conf_threshold)
+
+    if len(boxes):
+        nms_output = non_max_suppression(boxes, scores, conf_threshold)
+        visualize(nms_output, boxes, OV_image, label_names, scores, input_layer)
+
+    return OV_image
