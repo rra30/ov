@@ -9,6 +9,9 @@ model = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
 compiled_model = core.compile_model(model = model, device_name="CPU")
 input_layer = compiled_model.input(0)
 output_layer = compiled_model.output(0)
+
+label_map = ['neutral', 'happy', 'sad', 'surprise', 'anger']
+
 def prepare_data(image, input_layer):
 
     input_w, input_h = input_layer.shape[2], input_layer.shape[3]
