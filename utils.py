@@ -1,8 +1,8 @@
-import numpy as np
 import openvino as ov
-import matplotlib.pyplot as plt
 import cv2
-
+import numpy as np
+import glob
+from ultralytics.utils.plotting import colors
 core = ov.Core()
 
 model_emo = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
