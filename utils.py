@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 import glob
 from ultralytics.utils.plotting import colors
+import PIL
+from PIL import Image
 core = ov.Core()
 
 model = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
