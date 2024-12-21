@@ -1,11 +1,11 @@
 import streamlit as st
-import utils
 import cv2
-import numpy as np
-import io
 import PIL
 from PIL import Image
-from camera_input_live import camera_input_live
+import numpy
+import utils
+import io
+import gradio
 
 def play_video(video_source):
     camera = cv2.VideoCapture(video_source)
