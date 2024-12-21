@@ -26,7 +26,7 @@ compiled_model_ag = core.compile_model(model = model_ag, device_name="CPU")
 input_layer_ag = compiled_model_ag.input(0)
 output_layer_ag = compiled_model_ag.output
 
-def prepare_data(image, input_layer):
+def prepare_data(image, input_layer_emo):
 
     input_w, input_h = input_layer.shape[2], input_layer.shape[3]
     input_image = cv2.resize(image, (input_w,input_h))
