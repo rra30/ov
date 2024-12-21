@@ -29,11 +29,6 @@ st.set_page_config(
 
 st.title("Welcome to '살자 예방 게이트 키퍼' ✋")
 source_radio = st.sidebar.radio("Select Source",["IMAGE","VIDEO","WEBCAM"])
-st.sidebar.header("Setting")
-conf_threshold = float(st.sidebar.slider("Select the Confidence Threshold", 10, 100, 20))/100
-
-
-source_radio = st.sidebar.radio("Select Source",["IMAGE","VIDEO","WEBCAM"])
 
 st.sidebar.header("Confidence")
 conf_threshold = float(st.sidebar.slider("Select the Confidence Threshold", 10, 100, 20))/100
