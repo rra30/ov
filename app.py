@@ -33,6 +33,11 @@ st.sidebar.header("Setting")
 conf_threshold = float(st.sidebar.slider("Select the Confidence Threshold", 10, 100, 20))/100
 
 
+source_radio = st.sidebar.radio("Select Source",["IMAGE","VIDEO","WEBCAM"])
+
+st.sidebar.header("Confidence")
+conf_threshold = float(st.sidebar.slider("Select the Confidence Threshold", 10, 100, 20))/100
+
 input = None
 if source_radio == "IMAGE":
     st.sidebar.header("Upload")
@@ -40,7 +45,7 @@ if source_radio == "IMAGE":
     
     if input is not None:
         uploaded_image = PIL.Image.open(input)
-        uploaded_image_cv =cv2.cvtColor(numpy.array(uploaded_image), cv2.COLOR_RGB2BGR)
+        uploaded_image_cv =cv2.cvtColor(np.array(uploaded_image), cv2.COLOR_RGB2BGR)
         visualized_image = utils.predict_image(uploaded_image_cv, conf_threshold = conf_threshold)
         st.image(visualized_image, channels = "BGR")
 
@@ -62,6 +67,7 @@ if source_radio == "VIDEO":
         play_video(temporary_location)
         if st.button("Replay", type="primary"):
             pass
+
 
 def play_live_camera():
     image = camera_input_live()
