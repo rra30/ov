@@ -26,6 +26,18 @@ compiled_model_ag = core.compile_model(model = model_ag, device_name="CPU")
 input_layer_ag = compiled_model_ag.input(0)
 output_layer_ag = compiled_model_ag.output
 
+def prepare_data(image, input_layer):
+
+    input_w, input_h = input_layer.shape[2], input_layer.shape[3]
+    input_image = cv2.resize(image, (input_w,input_h))
+    input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+    input_image = input_image/255
+
+    input_image = input_image.transpose(2, 0, 1)
+    input_image = np.expand_dims(input_image, 0)
+
+    return input_image
+
 def preprocess(image, input_layer_face):
 	N, input_channels, input_height, input_width = input_layer_face.shape
 
