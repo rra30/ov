@@ -27,7 +27,7 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded")
 
-st.title("Welcome to '살자 예방 게이트 키퍼' ✋")
+st.title("Welcome to '자살 예방 게이트 키퍼' ✋")
 source_radio = st.sidebar.radio("Select Source",["IMAGE","VIDEO","WEBCAM"])
 
 st.sidebar.header("Confidence")
