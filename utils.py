@@ -5,11 +5,11 @@ import glob
 from ultralytics.utils.plotting import colors
 core = ov.Core()
 
-model_emo = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
-compiled_model_emo = core.compile_model(model = model_emo, device_name="CPU")
-input_layer_emo = compiled_model_emo.input(0)
-output_layer_emo = compiled_model_emo.output(0)
-def prepare_data(image, input_layer_emo):
+model = core.read_model(model='./model/emotions-recognition-retail-0003.xml')
+compiled_model = core.compile_model(model = model, device_name="CPU")
+input_layer = compiled_model.input(0)
+output_layer = compiled_model.output(0)
+def prepare_data(image, input_layer):
 
     input_w, input_h = input_layer.shape[2], input_layer.shape[3]
     input_image = cv2.resize(image, (input_w,input_h))
