@@ -29,6 +29,8 @@ def prepare_data(image, input_layer):
 
     return input_image
 
+import glob
+
 infer_times_OV = []
 
 for i, image_path in enumerate(glob.glob(f'Pothole-detection-using-YOLOv5-1/valid/images/*.jpg')):
@@ -42,8 +44,10 @@ for i, image_path in enumerate(glob.glob(f'Pothole-detection-using-YOLOv5-1/vali
     inference_time = time.time() - infer_start
     infer_times_OV.append(inference_time)
     #------
+    clear_output(wait=True)
     display('Image: ' +  str(i))
 
+clear_output(wait=True)
 
 def non_max_suppression(boxes, scores, threshold):
     assert boxes.shape[0] == scores.shape[0]
@@ -140,6 +144,8 @@ def visualize(nms_output, boxes, orig_image, label_names,scores, input_layer ):
         text = str(int(np.rint(scores[i]*100))) + "% " + label_map[label_names[i]]
         cv2.putText(orig_image, text, (xmin+2,ymin-5), cv2.FONT_HERSHEY_SIMPLEX,
                    .75, color, 2, cv2.LINE_AA)
+
+    return orig_image
 
 def predict_image(img, conf_threshold):
 
