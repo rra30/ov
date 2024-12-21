@@ -24,8 +24,6 @@ def prepare_data(image, input_layer):
 
     return input_image
 
-import glob
-
 infer_times_OV = []
 
 for i, image_path in enumerate(glob.glob(f'Pothole-detection-using-YOLOv5-1/valid/images/*.jpg')):
@@ -39,10 +37,8 @@ for i, image_path in enumerate(glob.glob(f'Pothole-detection-using-YOLOv5-1/vali
     inference_time = time.time() - infer_start
     infer_times_OV.append(inference_time)
     #------
-    clear_output(wait=True)
     display('Image: ' +  str(i))
 
-clear_output(wait=True)
 
 def non_max_suppression(boxes, scores, threshold):
     assert boxes.shape[0] == scores.shape[0]
